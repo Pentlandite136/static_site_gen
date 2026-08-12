@@ -14,11 +14,17 @@ class TextNode:
         self.text_type = text_type
         self.url = url if text_type == TextType.LINK_TEXT or text_type == TextType.IMAGE_TEXT else None
 
-    def __eq__ (self, other: TextNode) -> bool:
+    def __eq__(self, other: TextNode) -> bool:
         result1 = self.text == other.text
         result2 = self.text_type == other.text_type
         result3 = self.url == other.url
         return result1 and result2 and result3
+
+    def __ne__(self, other: TextNode) -> bool:
+        result1 = self.text != other.text
+        result2 = self.text_type != other.text_type
+        result3 = self.url != other.url
+        return result1 or result2 or result3       
 
     def __repr__(self) -> str:
         class_name = type(self).__name__
