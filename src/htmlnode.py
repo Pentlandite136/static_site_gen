@@ -50,7 +50,7 @@ class LeafNode(HTMLNode):
 
     def to_html(self) -> str:
         if self.value == None:
-            raise ValueError()
+            raise ValueError("LeafNode: Missing value")
         if self.tag == None:
             return self.value
         if self.props == None:
@@ -61,7 +61,24 @@ class LeafNode(HTMLNode):
             for prop_key in props_keys:
                 attribute_str += f' {prop_key}="{self.props[prop_key]}"'
             result = f"<{self.tag}{attribute_str}>{self.value}</{self.tag}>"
-        return result 
+        return result
+
+class ParentNode(HTMLNode):
+    def __init__(self, tag: str, children: list[HTMLNode], props: dict[str, str] = None) -> None:       
+        super().__init__(tag=tag, children=children, props=props)
+
+    def to_html(self) -> str:
+        if self.tag == None:
+            raise ValueError("ParentNode: Missing tag")
+        if self.children == None:
+            raise ValueError("ParentNode: Missing child(ren)")
+ 
+        children_result = ""
+        for child in self.children:
+            child_result = child.to_html()
+            children_result += child_result
+        parent_and_children_result = f"<{self.tag}>{children_result}</{self.tag}>"
+        return parent_and_children_result         
 
 
 
