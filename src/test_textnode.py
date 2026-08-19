@@ -1,5 +1,6 @@
 import unittest
 from textnode import TextNode, TextType
+from TextNodeUtil import split_nodes_delimiter
 
 
 class TestTextNode(unittest.TestCase):
@@ -79,11 +80,101 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(html_node.tag, "img")  
         self.assertEqual(html_node.value, "")
         self.assertEqual(html_node.props, {"src": "https://boot.dev/image1", "alt": "alt text"})
-       
 
+    def test_split_0_inline_text(self):
+        node = [TextNode("This is not an italic text test.", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "_", TextType.ITALIC)
+        self.assertEqual(len(split_node), 1)
+        self.assertEqual(split_node[0].text, "This is not an italic text test.")
+        self.assertEqual(split_node[0].text_type, TextType.TEXT)
 
+    def test_split_1_inline_text(self):
+        node = [TextNode("This is an _italic text_ test.", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "_", TextType.ITALIC)
+        self.assertEqual(len(split_node), 3)
+        self.assertEqual(split_node[0].text, "This is an ")
+        self.assertEqual(split_node[0].text_type, TextType.TEXT)
+        self.assertEqual(split_node[1].text, "italic text")
+        self.assertEqual(split_node[1].text_type, TextType.ITALIC)       
+        self.assertEqual(split_node[2].text, " test.")
+        self.assertEqual(split_node[2].text_type, TextType.TEXT)
 
+    def test_split_2_inline_text(self):
+        node = [TextNode("_italic text_ test.", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "_", TextType.ITALIC)
+        self.assertEqual(len(split_node), 2)
+        self.assertEqual(split_node[0].text, "italic text")
+        self.assertEqual(split_node[0].text_type, TextType.ITALIC)       
+        self.assertEqual(split_node[1].text, " test.")
+        self.assertEqual(split_node[1].text_type, TextType.TEXT)
 
+    def test_split_3_inline_text(self):
+        node = [TextNode("_italic text_", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "_", TextType.ITALIC)
+        self.assertEqual(len(split_node), 1)
+        self.assertEqual(split_node[0].text, "italic text")
+        self.assertEqual(split_node[0].text_type, TextType.ITALIC)       
+
+    def test_split_double_inline_text1(self):
+        node = [TextNode("This _is_ an _italic text_ test.", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "_", TextType.ITALIC)
+        self.assertEqual(len(split_node), 5)
+        self.assertEqual(split_node[0].text, "This ")
+        self.assertEqual(split_node[0].text_type, TextType.TEXT)
+        self.assertEqual(split_node[1].text, "is")
+        self.assertEqual(split_node[1].text_type, TextType.ITALIC)       
+        self.assertEqual(split_node[2].text, " an ")
+        self.assertEqual(split_node[2].text_type, TextType.TEXT)
+        self.assertEqual(split_node[3].text, "italic text")       
+        self.assertEqual(split_node[3].text_type, TextType.ITALIC)       
+        self.assertEqual(split_node[4].text, " test.")
+        self.assertEqual(split_node[4].text_type, TextType.TEXT)                
+
+    def test_split_double_inline_text2(self):
+        node = [TextNode("This `J=J+1` increments variable `J` in FORTRAN.", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "`", TextType.CODE)
+        self.assertEqual(len(split_node), 5)
+        self.assertEqual(split_node[0].text, "This ")
+        self.assertEqual(split_node[0].text_type, TextType.TEXT)
+        self.assertEqual(split_node[1].text, "J=J+1")
+        self.assertEqual(split_node[1].text_type, TextType.CODE)       
+        self.assertEqual(split_node[2].text, " increments variable ")
+        self.assertEqual(split_node[2].text_type, TextType.TEXT)
+        self.assertEqual(split_node[3].text, "J")       
+        self.assertEqual(split_node[3].text_type, TextType.CODE)       
+        self.assertEqual(split_node[4].text, " in FORTRAN.")
+        self.assertEqual(split_node[4].text_type, TextType.TEXT)
+
+    def test_split_1_bold_inline_text(self):
+        node = [TextNode("To **boldly** go where ...", TextType.TEXT)]
+        split_node = split_nodes_delimiter(node, "**", TextType.BOLD)
+        self.assertEqual(len(split_node), 3)
+        self.assertEqual(split_node[0].text, "To ")
+        self.assertEqual(split_node[0].text_type, TextType.TEXT)
+        self.assertEqual(split_node[1].text, "boldly")
+        self.assertEqual(split_node[1].text_type, TextType.BOLD)       
+        self.assertEqual(split_node[2].text, " go where ...")
+        self.assertEqual(split_node[2].text_type, TextType.TEXT)
+
+    def test_split_mixed_inline_text(self):
+        node = [TextNode("To **be** or _not _**to be** that is the question.", TextType.TEXT)]
+        result1_node = split_nodes_delimiter(node, "**", TextType.BOLD)
+        self.assertEqual(len(result1_node), 5)
+        result2_node = split_nodes_delimiter(result1_node, "_", TextType.ITALIC)
+        print(f"C result2_node.text: {result2_node[0].text}")
+        self.assertEqual(len(result2_node), 6)
+        self.assertEqual(result2_node[0].text, "To ")
+        self.assertEqual(result2_node[0].text_type, TextType.TEXT)
+        self.assertEqual(result2_node[1].text, "be")
+        self.assertEqual(result2_node[1].text_type, TextType.BOLD)       
+        self.assertEqual(result2_node[2].text, " or ")
+        self.assertEqual(result2_node[2].text_type, TextType.TEXT)
+        self.assertEqual(result2_node[3].text, "not ")       
+        self.assertEqual(result2_node[3].text_type, TextType.ITALIC)       
+        self.assertEqual(result2_node[4].text, "to be")
+        self.assertEqual(result2_node[4].text_type, TextType.BOLD)
+        self.assertEqual(result2_node[5].text, " that is the question.")
+        self.assertEqual(result2_node[5].text_type, TextType.TEXT)
 
 
 if __name__ == "__main__":
