@@ -1,6 +1,6 @@
 import unittest
 from textnode import TextNode, TextType
-from TextNodeUtil import split_nodes_delimiter
+from TextNodeUtil import split_nodes_delimiter, extract_markdown_images, extract_markdown_links 
 
 
 class TestTextNode(unittest.TestCase):
@@ -161,7 +161,6 @@ class TestTextNode(unittest.TestCase):
         result1_node = split_nodes_delimiter(node, "**", TextType.BOLD)
         self.assertEqual(len(result1_node), 5)
         result2_node = split_nodes_delimiter(result1_node, "_", TextType.ITALIC)
-        print(f"C result2_node.text: {result2_node[0].text}")
         self.assertEqual(len(result2_node), 6)
         self.assertEqual(result2_node[0].text, "To ")
         self.assertEqual(result2_node[0].text_type, TextType.TEXT)
@@ -176,6 +175,65 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(result2_node[5].text, " that is the question.")
         self.assertEqual(result2_node[5].text_type, TextType.TEXT)
 
+    def test_extract_markdown_images_0(self):
+        matches = extract_markdown_images(
+            "This is text with no image"
+        )
+        self.assertListEqual([], matches)
+
+    def test_extract_markdown_images_1(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_markdown_images_2(self):
+        s = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
+        s += " and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        matches = extract_markdown_images(s)
+        image_list = [("rick roll", "https://i.imgur.com/aKaOqIh.gif"),]
+        image_list.append(("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg"),)
+        self.assertListEqual(image_list, matches)
+
+    def test_extract_markdown_images_3(self):
+        s = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
+        s += " and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        s += " with an intention non-image ![HP](https://hp.com)"
+        matches = extract_markdown_images(s)
+        image_list = [("rick roll", "https://i.imgur.com/aKaOqIh.gif"),]
+        image_list.append(("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg"),)
+        image_list.append(("HP", "https://hp.com"))
+        self.assertListEqual(image_list, matches)
+
+    def test_extract_markdown_links_0(self):
+        matches = extract_markdown_links(
+            "This is text with no link"
+        )
+        self.assertListEqual([], matches)
+
+    def test_extract_markdown_links_1(self):
+        matches = extract_markdown_links(
+            "This is text with a [link1](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("link1", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_markdown_links_2(self):
+        s = "This is text with 2 links [link1](https://i.imgur.com/aKaOqIh.gif)"
+        s += " and [link2](https://i.imgur.com/fJRm4Vk.jpeg)"
+        matches = extract_markdown_links(s)
+        link_list = [("link1", "https://i.imgur.com/aKaOqIh.gif"),]
+        link_list.append(("link2", "https://i.imgur.com/fJRm4Vk.jpeg"),)
+        self.assertListEqual(link_list, matches)
+
+    def test_extract_markdown_links_3(self):
+        s = "This is text with 3 links [link1](https://i.imgur.com/aKaOqIh.gif)"
+        s += " and [link2](https://i.imgur.com/fJRm4Vk.jpeg)"
+        s += " with another link [link3](https://hp.com)"
+        matches = extract_markdown_links(s)
+        link_list = [("link1", "https://i.imgur.com/aKaOqIh.gif"),]
+        link_list.append(("link2", "https://i.imgur.com/fJRm4Vk.jpeg"),)
+        link_list.append(("link3", "https://hp.com"))
+        self.assertListEqual(link_list, matches)
 
 if __name__ == "__main__":
     unittest.main()
