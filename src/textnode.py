@@ -1,6 +1,23 @@
 from enum import Enum
 from htmlnode import LeafNode     # need to import HTMLNode as well?
 
+#def text_node_to_html_node(text_node: TextNode) -> LeafNode:
+#       case TextType.TEXT:
+#            return LeafNode(None, text_node.text)
+#        case TextType.BOLD:
+#            return LeafNode(tag="b", value=text_node.text)
+#        case TextType.ITALIC:
+#            return LeafNode(tag="i", value=text_node.text)
+#        case TextType.CODE: 
+#            return LeafNode(tag="code", value=text_node.text)
+#        case TextType.LINK:
+#            return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})
+#        case TextType.IMAGE:
+#            return LeafNode(tag="img", value="", props={"src": text_node.url, "alt": "alt text"})
+#        case _:
+#            raise Exception(f"Error: Invalid Enum case: {text_node.text_type}")
+
+
 class TextType(Enum):
     TEXT = 0
     BOLD = 1

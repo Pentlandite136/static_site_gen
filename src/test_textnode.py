@@ -1,7 +1,7 @@
 import unittest
 from textnode import TextNode, TextType
 from TextNodeUtil import split_nodes_delimiter, extract_markdown_images, extract_markdown_links 
-from TextNodeUtil import split_nodes_image, split_nodes_link
+from TextNodeUtil import split_nodes_image, split_nodes_link, text_to_textnodes
 
 
 class TestTextNode(unittest.TestCase):
@@ -442,6 +442,104 @@ class TestTextNode(unittest.TestCase):
             ],
             new_nodes,
         )
+
+    def test_split_images_i_i(self):
+        node = TextNode(
+            "![image1](https://i.imgur.com/zjjcJKZ.png)![image2](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image1", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode("image2", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links_l_l(self):
+        node = TextNode(
+            "[link1](https://i.imgur.com/zjjcJKZ.png)[link2](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("link1", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode("link2", TextType.LINK, "https://i.imgur.com/3elNhQu.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_text_t_b_t_i_t_c_t_i_t_l(self):
+        s = "This is **text** with an _italic_ word and a `code block` and an "
+        s += "![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a "
+        s += "[link](https://boot.dev)"
+
+        new_nodes = text_to_textnodes(s)
+        self.assertListEqual(
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ", TextType.TEXT),
+                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                TextNode(" and a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_text_t_b_t_i_t_c_t_i(self):
+        s = "To **boldly** go where _Italians_ have never `coded before`: "
+        s += "![Mt Vesuvius](https://mtvesuvius.org/pompeii-python-coders)"
+
+        new_nodes = text_to_textnodes(s)
+        self.assertListEqual(
+            [
+                TextNode("To ", TextType.TEXT),
+                TextNode("boldly", TextType.BOLD),
+                TextNode(" go where ", TextType.TEXT),
+                TextNode("Italians", TextType.ITALIC),
+                TextNode(" have never ", TextType.TEXT),
+                TextNode("coded before", TextType.CODE),
+                TextNode(": ", TextType.TEXT),
+                TextNode("Mt Vesuvius", TextType.IMAGE, "https://mtvesuvius.org/pompeii-python-coders"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_text_t_i_t_b_t_l_t_b(self):
+        s = "This is an image of "
+        s += "![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg), some **bold text**, and a link: "
+        s += "[link](https://boot.dev) followed by **more bold text**"
+
+        new_nodes = text_to_textnodes(s)
+        self.assertListEqual(
+            [
+                TextNode("This is an image of ", TextType.TEXT),
+                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                TextNode(", some ", TextType.TEXT),                
+                TextNode("bold text", TextType.BOLD),
+                TextNode(", and a link: ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+                TextNode(" followed by ", TextType.TEXT),
+                TextNode("more bold text", TextType.BOLD),                
+            ],
+            new_nodes,
+        )
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
