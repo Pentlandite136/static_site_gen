@@ -126,8 +126,15 @@ def text_to_textnodes(text: str) -> list[TextNode]:
 
     return nodes5
 
-
-
+def markdown_to_blocks(markdown: str) -> list[str]:
+    new_block_list = []                                 # what will be returned;
+    block_list = markdown.split("\n\n")                 # split well-written md string based on double-newline;
+    for block in block_list:                            # get a block...
+        if len(block) != 0:                             # is block non-empty?
+            new_block = block.strip()                   # yes, so remove any whitespace (" ", "\t", "\n") from both ends;
+            if len(new_block) != 0:                     # is result non-empty?
+                new_block_list.append(new_block)        # yes, so append it to the new list;
+    return new_block_list
 
 
 
