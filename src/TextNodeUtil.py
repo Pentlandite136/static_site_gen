@@ -1,6 +1,14 @@
 import re
+from enum import Enum
 from textnode import TextType, TextNode
 
+class BlockType(Enum):
+    NORMAL_PARAGRAPH = 1
+    HEADING_BLOCK = 2
+    CODE_BLOCK = 3
+    QUOTE_BLOCK = 4
+    UNORDERED_LIST_BLOCK = 5
+    ORDERED_LIST_BLOCK = 6
 
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
     new_nodes = []
@@ -136,7 +144,78 @@ def markdown_to_blocks(markdown: str) -> list[str]:
                 new_block_list.append(new_block)        # yes, so append it to the new list;
     return new_block_list
 
+def is_heading_block(markdown_block: str) -> bool:
+    padded_block = markdown_block + "      "            # pad 6 trailing blanks so it is always long enough for slicing;
+    for i in range(2, 8):                               # i is stop index (exclusive) for slicing;
+        if padded_block[:i] == ("#" * (i - 1)) + " ":   # replicate '#' and attach trailing blank; match?
+            return True                                 # valid heading block;
+    return False                                        # something else
 
+def is_code_block(markdown_block: str) -> bool:
+    if len(markdown_block) < 7:                         # code block must be at least 7 chars long;
+        return False
+    if markdown_block[:4] == "```\n" and markdown_block[-3:] == "```":  # 3 backticks and newline at start & 3 backticks at end...
+        return True                                     # delimit a code block
+    else:
+        return False
+
+def is_quote_block(markdown_block: str) -> bool:
+    line_list = markdown_block.split("\n")             # split md using newline char to get a list of lines;
+    for line in line_list:                             # examine a line;
+        if len(line) == 0:                             # an empty line 
+            return False                               # does not meet quote block definition;
+        elif line[0] != ">":                           # line has at least 1 char, so we can index; is 1st char other than ">" ?
+            return False                               # yes, so not a quote block;
+    return True                                        # all lines begin with ">"
+ 
+def is_unordered_list_block(markdown_block) -> bool:
+    line_list = markdown_block.split("\n")             # split md using newline char to get a list of lines;
+    for line in line_list:                             # examine a line;
+        if len(line) < 2:                              # an empty line or too short to contain "> "
+            return False                               # does not meet unordered list block definition;
+        elif line[:2] != "- ":                         # line has at least 2 chars, so we can index; are first 2 chars other than "- "?
+            return False                               # yes, so not an unordered list block;
+    return True                                        # all lines begin with "- "
+
+def is_ordered_list_block(markdown_block) -> bool:
+    list_number = 1                                    # 1st list number must be 1;
+    line_list = markdown_block.split("\n")             # split md using newline char to get a list of lines;
+    for line in line_list:                             # examine a line;
+        if len(line) == 0:                             # an empty line
+            return False                               # does not meet ordered list block definition;
+        dot_space_list = line.split(". ", 1)           # try to split the line at ". " but only first split piece is relevant;
+        pre_dot_space = dot_space_list[0]              # for clarity, this is the text preceding the ". ";
+        if len(pre_dot_space) == 0:                    # nothing preceded the ". " so number is absent
+            return False                               # thus malformed ordered list;
+        try:
+            number = int(pre_dot_space)                # try to convert substring before the ". " into an integer;
+        except ValueError:                             # not a convertible integer, so 
+            return False                               # malformed md
+        if number == list_number:                      # is number sequential?
+            list_number += 1                           # yes, so bump the next expected one
+        else:                                          # no, so
+            return False                               # this is a malformed ordered list;
+    return True                                        # all lines numbered correctly
+                                     
+
+def block_to_block_type(markdown_block: str) -> BlockType:
+    if len(markdown_block) == 0:
+        return BlockType.NORMAL_PARAGRAPH
+    elif is_heading_block(markdown_block):
+        return BlockType.HEADING_BLOCK
+    elif is_code_block(markdown_block):
+        return BlockType.CODE_BLOCK
+    elif is_quote_block(markdown_block):
+        return BlockType.QUOTE_BLOCK
+    elif is_unordered_list_block(markdown_block):
+        return BlockType.UNORDERED_LIST_BLOCK
+    elif is_ordered_list_block(markdown_block):
+        return BlockType.ORDERED_LIST_BLOCK
+    else:
+        return BlockType.NORMAL_PARAGRAPH
+
+    
+    
 
 
      
