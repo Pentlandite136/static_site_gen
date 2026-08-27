@@ -215,6 +215,11 @@ def block_to_block_type(markdown_block: str) -> BlockType:
     else:
         return BlockType.NORMAL_PARAGRAPH
 
+def create_HTMLNode_for_paragraph_block(markdown_block: str) -> HTMLNode:
+    no_newlines_block = markdown_block.replace("\n", " ")         # replace all newlines with a blank;
+    tag = "p"                                                     # tag for paragraph;
+    node = HTMLNode(tag, no_newlines_block)                       # build the node;
+    return node
 
 def create_HTMLNode_for_heading_block(markdown_block: str) -> HTMLNode:
     index_of_leftmost_blank = markdown_block.find(" ")             # md block is known to be a valid single heading block; find the " ";
@@ -222,6 +227,50 @@ def create_HTMLNode_for_heading_block(markdown_block: str) -> HTMLNode:
     node = HTMLNode(tag, markdown_block[index_of_leftmost_blank:]) # the found blank is part of the value; build HTML node
     return node
 
+def create_HTMLNode_for_code_block(markdown_block: str) -> HTMLNode:
+    index_of_leftmost_newline = markdown_block.find("\n")          # md block is known to be a valid code block; find the newline;
+    index_start = index_of_leftmost_newline + 1                    # slice start is char after this newline;
+    index_stop  = len(markdown_block) - 3                          # slice stop is 3 tickmarks before end;
+    child_tag = "code"                                             # this code block is the child node, and
+    value = markdown_block[index_start : index_stop]               # text in between is the value;
+    child_node = HTMLNode(child_tag, value)                        # build child node;
+    parent_tag = "pre"                                             # define parent tag;
+    parent_node = HTMLNode(parent_tag, "", [child_node])           # build HTML parent node with a list of one child node;
+    return parent_node
+
+def create_HTMLNode_for_quote_block(markdown_block: str) -> HTMLNode:
+    line_list = markdown_block.split("\n")                         # md block is known to be a valid quote block; split it into lines;
+    new_line_str = ""                                              # init the new line list w/o leading ">";
+    for line in line_list:                                         # process each line;
+        quoted_line = line[1:] + "\n"                              # slice around ">" at index of 0 and re-attach a newline;
+        new_line_str += quoted_line                                # build up the new string of lines 
+    tag = "quoteblock"                                             # define the tag
+    node = HTMLNode(tag, new_line_str)                             # build HTML node
+    return node
+
+def create_HTMLNode_for_unordered_list_block(markdown_block: str) -> HTMLNode:
+    child_node_list = []                                           # init the list of children nodes;
+    line_list = markdown_block.split("\n")                         # md block is known to be a valid unordered list block; split it into lines;
+    child_tag = "li"                                               # tag each line item as a child node;
+    for line_item in line_list:                                    # process each line item;
+        tagged_line_item = line_item + "\n"                        # keep leading "- "; re-attach a newline;
+        child_node = HTMLNode(child_tag, tagged_line_item)         # build HTML child node from this line item;
+        child_node_list.append(child_node)                         # append child node to the list of children nodes;
+    parent_tag = "ul"                                              # parent node is an unordered list;
+    parent_node = HTMLNode(parent_tag, "", child_node_list)        # build the parent node & include the list of children nodes         
+    return parent_node
+
+def create_HTMLNode_for_ordered_list_block(markdown_block: str) -> HTMLNode:
+    child_node_list = []                                           # init the list of children nodes;
+    line_list = markdown_block.split("\n")                         # md block is known to be a valid ordered list block; split it into lines;
+    child_tag = "li"                                               # tag each line item as a child node;
+    for line_item in line_list:                                    # process each line item;
+        tagged_line_item = line_item + "\n"                        # keep ordered list number and dot; re-attach a newline;
+        child_node = HTMLNode(child_tag, tagged_line_item)         # build HTML line item node;
+        child_node_list.append(child_node)                         # append to the list of children nodes
+    parent_tag = "ol"                                              # parent node is an ordered list
+    parent_node = HTMLNode(parent_tag, "", child_node_list)        # build the parent node & include the list of children nodes         
+    return parent_node
 
 
 
@@ -237,13 +286,13 @@ def markdown_to_html(markdown: str) -> HTMLNode:
             case BlockType.HEADING_BLOCK:
                 node = create_HTMLNode_for_heading_block(markdown)
             case BlockType.CODE_BLOCK:
-                pass
+                node = create_HTMLNode_for_code_block(markdown)
             case BlockType.QUOTE_BLOCK:
-                pass
+                node = create_HTMLNode_for_quote_block(markdown)
             case BlockType.UNORDERED_LIST_BLOCK:
-                pass
+                node = create_HTMLNode_for_unordered_list_block(markdown)
             case BlockType.ORDERED_LIST_BLOCK:
-                pass
+                node = create_HTMLNode_for_ordered_list_block(markdown)
             case _:
                 raise Exception(f"Error: unidentified block type")
 
