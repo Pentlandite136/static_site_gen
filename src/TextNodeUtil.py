@@ -1,6 +1,7 @@
 import re
 from enum import Enum
 from textnode import TextType, TextNode
+from htmlnode import HTMLNode
 
 class BlockType(Enum):
     NORMAL_PARAGRAPH = 1
@@ -214,7 +215,38 @@ def block_to_block_type(markdown_block: str) -> BlockType:
     else:
         return BlockType.NORMAL_PARAGRAPH
 
-    
+
+def create_HTMLNode_for_heading_block(markdown_block: str) -> HTMLNode:
+    index_of_leftmost_blank = markdown_block.find(" ")             # md block is known to be a valid single heading block; find the " ";
+    tag = f"h{index_of_leftmost_blank}"                            # heading level number is exactly the index of the blank; build the tag;
+    node = HTMLNode(tag, markdown_block[index_of_leftmost_blank:]) # the found blank is part of the value; build HTML node
+    return node
+
+
+
+
+
+
+
+def markdown_to_html(markdown: str) -> HTMLNode:
+    list_of_blocks = markdown_to_blocks(markdown)             # split md into list of blocks;
+    for block in list_of_blocks:                              # examine a block
+        match block_to_block_type(block):                     # & determine what type of block it is;
+            case BlockType.NORMAL_PARAGRAPH:
+                pass
+            case BlockType.HEADING_BLOCK:
+                node = create_HTMLNode_for_heading_block(markdown)
+            case BlockType.CODE_BLOCK:
+                pass
+            case BlockType.QUOTE_BLOCK:
+                pass
+            case BlockType.UNORDERED_LIST_BLOCK:
+                pass
+            case BlockType.ORDERED_LIST_BLOCK:
+                pass
+            case _:
+                raise Exception(f"Error: unidentified block type")
+
     
 
 
