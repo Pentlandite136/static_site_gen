@@ -1,6 +1,7 @@
 import re
 from enum import Enum
 from textnode import TextType, TextNode
+from textnode import text_node_to_html_node
 from htmlnode import HTMLNode
 
 class BlockType(Enum):
@@ -272,7 +273,12 @@ def create_HTMLNode_for_ordered_list_block(markdown_block: str) -> HTMLNode:
     parent_node = HTMLNode(parent_tag, "", child_node_list)        # build the parent node & include the list of children nodes         
     return parent_node
 
-
+def text_to_children(text: str) -> list[HTMLNode]:
+    text_node_list = text_to_textnodes(text)                 # convert the text into a list of text nodes;
+    html_leaf_node_list = []                                 # init the list of leaf node for inline blocks that we return;
+    for text_node in text_node_list:                         # process a text node from the list,
+        html_leaf_node = text_node_to_html_node(text_node)   # and convert it to an HTML leaf node;  
+    return html_leaf_node_list
 
 
 
@@ -284,7 +290,10 @@ def markdown_to_html(markdown: str) -> HTMLNode:
             case BlockType.NORMAL_PARAGRAPH:
                 pass
             case BlockType.HEADING_BLOCK:
+                children_node_list = text_to_children(markdown)
                 node = create_HTMLNode_for_heading_block(markdown)
+                
+
             case BlockType.CODE_BLOCK:
                 node = create_HTMLNode_for_code_block(markdown)
             case BlockType.QUOTE_BLOCK:

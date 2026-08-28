@@ -1,21 +1,22 @@
 from enum import Enum
 from htmlnode import LeafNode     # need to import HTMLNode as well?
 
-#def text_node_to_html_node(text_node: TextNode) -> LeafNode:
-#       case TextType.TEXT:
-#            return LeafNode(None, text_node.text)
-#        case TextType.BOLD:
-#            return LeafNode(tag="b", value=text_node.text)
-#        case TextType.ITALIC:
-#            return LeafNode(tag="i", value=text_node.text)
-#        case TextType.CODE: 
-#            return LeafNode(tag="code", value=text_node.text)
-#        case TextType.LINK:
-#            return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})
-#        case TextType.IMAGE:
-#            return LeafNode(tag="img", value="", props={"src": text_node.url, "alt": "alt text"})
-#        case _:
-#            raise Exception(f"Error: Invalid Enum case: {text_node.text_type}")
+def text_node_to_html_node(text_node: TextNode) -> LeafNode:
+    match text_node.text_type:
+        case TextType.TEXT:
+            return LeafNode(None, text_node.text)
+        case TextType.BOLD:
+            return LeafNode(tag="b", value=text_node.text)
+        case TextType.ITALIC:
+            return LeafNode(tag="i", value=text_node.text)
+        case TextType.CODE: 
+            return LeafNode(tag="code", value=text_node.text)
+        case TextType.LINK:
+            return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})
+        case TextType.IMAGE:
+            return LeafNode(tag="img", value="", props={"src": text_node.url, "alt": "alt text"})
+        case _:
+            raise Exception(f"Error: Invalid Enum case: {text_node.text_type}")
 
 
 class TextType(Enum):
@@ -49,22 +50,22 @@ class TextNode:
         result = f"{class_name}({self.text!r}, {self.text_type.name!r}, {self.url!r})" 
         return result
 
-    def text_node_to_html_node(self) -> LeafNode:
-        match self.text_type:
-            case TextType.TEXT:
-                return LeafNode(None, value=self.text)
-            case TextType.BOLD:
-                return LeafNode(tag="b", value=self.text)
-            case TextType.ITALIC:
-                return LeafNode(tag="i", value=self.text)
-            case TextType.CODE: 
-                return LeafNode(tag="code", value=self.text)
-            case TextType.LINK:
-                return LeafNode(tag="a", value=self.text, props={"href": self.url})
-            case TextType.IMAGE:
-                return LeafNode(tag="img", value="", props={"src": self.url, "alt": "alt text"})
-            case _:
-                raise Exception(f"Error: Invalid Enum case: {self.text_type}")
+#    def text_node_to_html_node(self) -> LeafNode:
+#        match self.text_type:
+#            case TextType.TEXT:
+#                return LeafNode(None, value=self.text)
+#            case TextType.BOLD:
+#                return LeafNode(tag="b", value=self.text)
+#            case TextType.ITALIC:
+#                return LeafNode(tag="i", value=self.text)
+#            case TextType.CODE: 
+#                return LeafNode(tag="code", value=self.text)
+#            case TextType.LINK:
+#                return LeafNode(tag="a", value=self.text, props={"href": self.url})
+#            case TextType.IMAGE:
+#                return LeafNode(tag="img", value="", props={"src": self.url, "alt": "alt text"})
+#            case _:
+#                raise Exception(f"Error: Invalid Enum case: {self.text_type}")
 
 
 
