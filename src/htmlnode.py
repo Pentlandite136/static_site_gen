@@ -1,6 +1,6 @@
 
 
-class HTMLNode:
+class HTMLNode:                              # the base class
     def __init__(self, tag: str = None, value: str = None, children: list[HTMLNode] = None, props: dict[str, str] = None) -> None:
         self.tag = tag
         self.value = value
@@ -26,8 +26,8 @@ class HTMLNode:
         result4 = self.props != other.props
         return result1 or result2 or result3 or result4      
 
-    def to_html(self) -> None:
-        raise NotImplementedError()
+    def to_html(self) -> None:                     # is overridden by methods in LeafNode & ParentNode classes
+        raise NotImplementedError()            
 
     def props_to_html(self) -> str:
         if self.props == None or self.props == "":
@@ -39,7 +39,7 @@ class HTMLNode:
             attribute_str += f' {prop_key}="{self.props[prop_key]}"'
         return attribute_str   
 
-class LeafNode(HTMLNode):
+class LeafNode(HTMLNode):                  # only tag & value; a node w/o children        
     def __init__(self, tag: str, value: str, props: dict[str, str] = None) -> None:       
         super().__init__(tag=tag, value=value, props=props)
 
@@ -48,7 +48,7 @@ class LeafNode(HTMLNode):
         result = f"{class_name}({self.tag!r}, {self.value!r}, {self.props!r})" 
         return result        
 
-    def to_html(self) -> str:
+    def to_html(self) -> str:              # renders <tag>value</tag>
         if self.value == None:
             raise ValueError("LeafNode: Missing value")
         if self.tag == None:
@@ -63,11 +63,11 @@ class LeafNode(HTMLNode):
             result = f"<{self.tag}{attribute_str}>{self.value}</{self.tag}>"
         return result
 
-class ParentNode(HTMLNode):
+class ParentNode(HTMLNode):                  # node w/ tag & list of children nodes
     def __init__(self, tag: str, children: list[HTMLNode], props: dict[str, str] = None) -> None:       
         super().__init__(tag=tag, children=children, props=props)
 
-    def to_html(self) -> str:
+    def to_html(self) -> str:                # renders its tag & calls every child node
         if self.tag == None:
             raise ValueError("ParentNode: Missing tag")
         if self.children == None:
@@ -76,7 +76,8 @@ class ParentNode(HTMLNode):
         children_result = ""
         for child in self.children:
             child_result = child.to_html()
-            children_result += child_result
+            if child_result != None:
+                children_result += child_result
         parent_and_children_result = f"<{self.tag}>{children_result}</{self.tag}>"
         return parent_and_children_result         
 

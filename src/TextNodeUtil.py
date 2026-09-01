@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from textnode import TextType, TextNode
 from textnode import text_node_to_html_node
-from htmlnode import HTMLNode
+from htmlnode import HTMLNode, ParentNode, LeafNode
 
 class BlockType(Enum):
     NORMAL_PARAGRAPH = 1
@@ -216,94 +216,157 @@ def block_to_block_type(markdown_block: str) -> BlockType:
     else:
         return BlockType.NORMAL_PARAGRAPH
 
-def create_HTMLNode_for_paragraph_block(markdown_block: str) -> HTMLNode:
-    no_newlines_block = markdown_block.replace("\n", " ")         # replace all newlines with a blank;
-    tag = "p"                                                     # tag for paragraph;
-    node = HTMLNode(tag, no_newlines_block)                       # build the node;
-    return node
+def create_HTMLNode_for_paragraph_block(markdown_block: str) -> ParentNode:   # FIXED: should be ParentNode not HTMLNode; contains only raw text;
+    lines = markdown_block.split("\n")                                        # FIXED:
+    paragraph = " ".join(lines)                                               # FIXED:
+#   no_newlines_block = markdown_block.replace("\n", " ")                     # replace all newlines with a blank; would this have worked?
+    child_node_list = text_to_children(paragraph)                             # FIXED: completely missed this step
+#    child_node_list = []                                                     # WRONG:
+#    block_list = markdown_to_blocks(markdown_block)                          # WRONG:
+#   for block in block_list:                                                  # WRONG:
 
-def create_HTMLNode_for_heading_block(markdown_block: str) -> HTMLNode:
-    index_of_leftmost_blank = markdown_block.find(" ")             # md block is known to be a valid single heading block; find the " ";
-    tag = f"h{index_of_leftmost_blank}"                            # heading level number is exactly the index of the blank; build the tag;
-    node = HTMLNode(tag, markdown_block[index_of_leftmost_blank:]) # the found blank is part of the value; build HTML node
-    return node
-
-def create_HTMLNode_for_code_block(markdown_block: str) -> HTMLNode:
-    index_of_leftmost_newline = markdown_block.find("\n")          # md block is known to be a valid code block; find the newline;
-    index_start = index_of_leftmost_newline + 1                    # slice start is char after this newline;
-    index_stop  = len(markdown_block) - 3                          # slice stop is 3 tickmarks before end;
-    child_tag = "code"                                             # this code block is the child node, and
-    value = markdown_block[index_start : index_stop]               # text in between is the value;
-    child_node = HTMLNode(child_tag, value)                        # build child node;
-    parent_tag = "pre"                                             # define parent tag;
-    parent_node = HTMLNode(parent_tag, "", [child_node])           # build HTML parent node with a list of one child node;
+    parent_node = ParentNode("p", child_node_list)                            # OK: build the Parent Node;
     return parent_node
 
-def create_HTMLNode_for_quote_block(markdown_block: str) -> HTMLNode:
-    line_list = markdown_block.split("\n")                         # md block is known to be a valid quote block; split it into lines;
-    new_line_str = ""                                              # init the new line list w/o leading ">";
-    for line in line_list:                                         # process each line;
-        quoted_line = line[1:] + "\n"                              # slice around ">" at index of 0 and re-attach a newline;
-        new_line_str += quoted_line                                # build up the new string of lines 
-    tag = "quoteblock"                                             # define the tag
-    node = HTMLNode(tag, new_line_str)                             # build HTML node
-    return node
+def create_HTMLNode_for_heading_block(markdown_block: str) -> ParentNode:     # FIXED: should be ParentNode not HTMLNode; contains only raw text;
+    level = 0                                                                 # FIXED:
+    for char in markdown_block:                                               # FIXED:
+        if char == "#":                                                       # FIXED:
+            level += 1                                                        # FIXED:
+        else:                                                                 # FIXED:
+            break                                                             # FIXED:
+    if level + 1 >= len(markdown_block):                                      # FIXED:
+        raise ValueError(f"invalid heading level: {level}")                   # FIXED:
+    text = markdown_block[level + 1 :]                                        # FIXED:
+    children = text_to_children(text)                                         # FIXED:
 
-def create_HTMLNode_for_unordered_list_block(markdown_block: str) -> HTMLNode:
-    child_node_list = []                                           # init the list of children nodes;
-    line_list = markdown_block.split("\n")                         # md block is known to be a valid unordered list block; split it into lines;
-    child_tag = "li"                                               # tag each line item as a child node;
-    for line_item in line_list:                                    # process each line item;
-        tagged_line_item = line_item + "\n"                        # keep leading "- "; re-attach a newline;
-        child_node = HTMLNode(child_tag, tagged_line_item)         # build HTML child node from this line item;
-        child_node_list.append(child_node)                         # append child node to the list of children nodes;
-    parent_tag = "ul"                                              # parent node is an unordered list;
-    parent_node = HTMLNode(parent_tag, "", child_node_list)        # build the parent node & include the list of children nodes         
+#    index_of_leftmost_blank = markdown_block.find(" ")             # WRONG: evidently md block may not be a valid single heading block;
+#    tag = f"h{index_of_leftmost_blank}"                            # WRONG: may have worked for some cases if not malformed;
+#    node = LeafNode(tag, markdown_block[index_of_leftmost_blank:]) # WRONG: should create ParentNode, not Leaf node
+#    return node
+
+    parent_node = ParentNode(f"h{level}", children)
     return parent_node
 
-def create_HTMLNode_for_ordered_list_block(markdown_block: str) -> HTMLNode:
-    child_node_list = []                                           # init the list of children nodes;
-    line_list = markdown_block.split("\n")                         # md block is known to be a valid ordered list block; split it into lines;
-    child_tag = "li"                                               # tag each line item as a child node;
-    for line_item in line_list:                                    # process each line item;
-        tagged_line_item = line_item + "\n"                        # keep ordered list number and dot; re-attach a newline;
-        child_node = HTMLNode(child_tag, tagged_line_item)         # build HTML line item node;
-        child_node_list.append(child_node)                         # append to the list of children nodes
-    parent_tag = "ol"                                              # parent node is an ordered list
-    parent_node = HTMLNode(parent_tag, "", child_node_list)        # build the parent node & include the list of children nodes         
+def create_HTMLNode_for_code_block(markdown_block: str) -> ParentNode:  # FIXED: should be ParentNode not HTMLNode; contains only raw text;
+    if not markdown_block.startswith("```") or not markdown_block.endswith("```"):  # FIXED: 
+        raise ValueError("invalid code block")                                      # FIXED:
+    text = markdown_block[4:-3]                                                     # FIXED:
+    raw_text_node = TextNode(text, TextType.TEXT)                                   # FIXED:
+    child = text_node_to_html_node(raw_text_node)                                   # FIXED:
+    code = ParentNode("code", [child])                                              # FIXED:
+    pre = ParentNode("pre", [code])                                                 # FIXED:
+
+#    index_of_leftmost_newline = markdown_block.find("\n")          # WRONG: md block might not be a valid code block; find the newline;
+#    index_start = index_of_leftmost_newline + 1                    # slice start is char after this newline;
+#    index_stop  = len(markdown_block) - 3                          # slice stop is 3 tickmarks before end;
+#    child_tag = "code"                                             # this code block is the child node, and
+#    value = markdown_block[index_start : index_stop]               # text in between is the value;
+#    child_node = LeafNode(child_tag, value)                        # WRONG: ParentNode not LeafNode;
+#    parent_node = ParentNode("pre", [child_node])                  # OK: build parent node with a list of one child node;
+
+    return pre
+
+def create_HTMLNode_for_quote_block(markdown_block: str) -> ParentNode:            # FIXED: should be ParentNode not HTMLNode; contains only raw text;
+    line_list = markdown_block.split("\n")                         # OK: md block may not be a valid quote block; split it into lines;
+    new_line_list = []                                             # WRONG: init the new line list, not as a str;
+    for line in line_list:                                         # OK: process each line;
+        if not line.startswith(">"):                               # FIXED:
+            raise ValueError("invalid quote block")                # FIXED:
+        new_line_list.append(line.lstrip(">").strip())             # FIXED:
+    content = " ".join(new_line_list)                              # FIXED:
+    children = text_to_children(content)                           # FIXED:
+    parent_node = ParentNode("blockquote", children)               # FIXED:
+
+#        quoted_line = line[1:] + "\n"                             # slice around ">" at index of 0 and re-attach a newline;
+#        new_line_str += quoted_line                               # build up the new string of lines 
+#    tag = "quoteblock"                                            # WRONG: blockquote, not quoteblock
+#    node = LeafNode(tag, new_line_str)                            # WRONG: ParentNode, not Leaf node
     return parent_node
 
-def text_to_children(text: str) -> list[HTMLNode]:
-    text_node_list = text_to_textnodes(text)                 # convert the text into a list of text nodes;
-    html_leaf_node_list = []                                 # init the list of leaf node for inline blocks that we return;
-    for text_node in text_node_list:                         # process a text node from the list,
-        html_leaf_node = text_node_to_html_node(text_node)   # and convert it to an HTML leaf node;  
+def create_HTMLNode_for_unordered_list_block(markdown_block: str) -> ParentNode:    # FIXED: should be ParentNode not HTMLNode; contains only raw text;
+    parent_node_list = []                                          # FIXED: init the list of children nodes; NO! this is a list of ParentNodes 
+    line_list = markdown_block.split("\n")                         # OK: md block is known to be a valid unordered list block; split it into lines;
+    for line_item in line_list:                                    # OK: process each line item;
+        tagged_line_item = line_item[2:]                           # WRONG: discard, not keep, leading "- "; do not re-attach a newline;
+        children = text_to_children(tagged_line_item)              # WRONG: completely missed this step;
+
+#       child_node = LeafNode("li", tagged_line_item)              # WRONG: build Parent node, not HTML child node, from this line item;
+
+        parent_node = ParentNode("li", children)                   # FIXED:
+        parent_node_list.append(parent_node)                       # FIXED: append Parent node, not child node, to the list of parent nodes;
+    grand_parent_node = ParentNode("ul", parent_node_list)         # FIXED: build the grandparent node & include the list of parents as its children nodes         
+    return grand_parent_node
+
+def create_HTMLNode_for_ordered_list_block(markdown_block: str) -> ParentNode:     # FIXED: should be ParentNode not HTMLNode; contains only raw text;
+    parent_node_list = []                                          # FIXED: init the list of children nodes; NO! this is a list of ParentNodes 
+    line_list = markdown_block.split("\n")                         # OK: md block is known to be a valid ordered list block; split it into lines;
+    for line_item in line_list:                                    # OK: process each line item;
+        parts = line_item.split(". ", 1)                           # FIXED:
+        text = parts[1]                                            # FIXED:
+        children = text_to_children(text)                          # FIXED:
+
+        parent_node = ParentNode("li", children)                   # WRONG: build ParentNode, not Leaf Node;
+        parent_node_list.append(parent_node)                       # FIXED:
+    grand_parent_node = ParentNode("ol", parent_node_list)         # FIXED: build the grandparent node & include the list of parents as its children nodes         
+    return grand_parent_node
+
+def text_to_children(text: str) -> list[HTMLNode]:           # OK:
+    text_node_list = text_to_textnodes(text)                 # OK: convert the text into a list of text nodes;
+    html_leaf_node_list = []                                 # OK: init the list of leaf node (= children) for inline blocks that we return;
+    for text_node in text_node_list:                         # OK: process a text node from the list,
+        html_leaf_node = text_node_to_html_node(text_node)   # OK: and convert it to an HTML leaf node;
+        html_leaf_node_list.append(html_leaf_node)           # FIXED: forgot this step
     return html_leaf_node_list
 
 
 
 
-def markdown_to_html(markdown: str) -> HTMLNode:
-    list_of_blocks = markdown_to_blocks(markdown)             # split md into list of blocks;
-    for block in list_of_blocks:                              # examine a block
-        match block_to_block_type(block):                     # & determine what type of block it is;
-            case BlockType.NORMAL_PARAGRAPH:
-                pass
-            case BlockType.HEADING_BLOCK:
-                children_node_list = text_to_children(markdown)
-                node = create_HTMLNode_for_heading_block(markdown)
-                
+def markdown_to_html_node(markdown: str) -> ParentNode:       # FIXED: converts full md doc into single parent HTMLNode;
+    block_node_list = []                                      # init the list of block nodes; completely missed that this list = children;
+    list_of_blocks = markdown_to_blocks(markdown)             # OK: split md into list of blocks;
 
-            case BlockType.CODE_BLOCK:
-                node = create_HTMLNode_for_code_block(markdown)
-            case BlockType.QUOTE_BLOCK:
-                node = create_HTMLNode_for_quote_block(markdown)
-            case BlockType.UNORDERED_LIST_BLOCK:
-                node = create_HTMLNode_for_unordered_list_block(markdown)
-            case BlockType.ORDERED_LIST_BLOCK:
-                node = create_HTMLNode_for_ordered_list_block(markdown)
-            case _:
-                raise Exception(f"Error: unidentified block type")
+    for block in list_of_blocks:                              # OK: examine a block
+        html_node = block_to_html_node(block)                 # FIXED: completely missed the need for this fn;
+        block_node_list.append(html_node)                     # OK: 
+    parent_node = ParentNode("div", block_node_list, None)    # almost OK; missed the None parameter
+    return parent_node
+
+
+
+
+def block_to_html_node(block: str) -> ParentNode:                      # FIXED: had this code in markdown_to_html_node()
+    match block_to_block_type(block):                                  # OK: & determine what type of block it is;
+
+        case BlockType.NORMAL_PARAGRAPH:                               # OK: must be raw text, so
+            parent_node = create_HTMLNode_for_paragraph_block(block)   # FIXED: had markdown instead of block; create a Parent Node for it;
+            return parent_node                                         # FIXED:
+                       
+        case BlockType.HEADING_BLOCK:
+            parent_node = create_HTMLNode_for_heading_block(block)     # FIXED: had markdown instead of block; create a Parent Node for it;
+            return parent_node                                         # FIXED:
+        
+        case BlockType.CODE_BLOCK:
+            parent_node = create_HTMLNode_for_code_block(block)        # FIXED: had markdown instead of block; create a Parent Node for it;         
+            return parent_node                                         # FIXED:
+
+        case BlockType.QUOTE_BLOCK:
+            parent_node = create_HTMLNode_for_quote_block(block)       # FIXED: had markdown instead of block; create a Parent Node for it;
+            return parent_node                                         # FIXED:
+
+        case BlockType.UNORDERED_LIST_BLOCK:
+            parent_node = create_HTMLNode_for_unordered_list_block(block) # FIXED: had markdown instead of block; create a Parent Node for it;
+            return parent_node                                            # FIXED: 
+                      
+        case BlockType.ORDERED_LIST_BLOCK:
+            parent_node = create_HTMLNode_for_ordered_list_block(block)   # FIXED: had markdown instead of block; create a Parent Node for it;
+            return parent_node                                            # FIXED:
+
+        case _:
+            raise Exception(f"Error: unidentified block type")            # OK: could also raise ValueError("invalid block type")
+
+        
+
 
     
 
