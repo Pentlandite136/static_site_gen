@@ -1,5 +1,5 @@
 import unittest
-from TextNodeUtil import markdown_to_blocks, block_to_block_type, BlockType
+from TextNodeUtil import markdown_to_blocks, block_to_block_type, BlockType, extract_title
 #from TextNodeUtil import is_heading_block
 #from TextNodeUtil import is_code_block
 #from TextNodeUtil import is_quote_block
@@ -273,4 +273,30 @@ This is the same paragraph on a new line
     def test_markdown_ordered_list_7(self):
         md = "1. Markdown ordered list test 7 (leading one dot and space, one newline \nB. leading B dot & space, final line)"
         blocktype = block_to_block_type(md)
-        self.assertEqual(blocktype, BlockType.NORMAL_PARAGRAPH )                                                                                                                              
+        self.assertEqual(blocktype, BlockType.NORMAL_PARAGRAPH ) 
+
+    def test_markdown_title_1(self):
+        md = "# Hello"  
+        h1 = extract_title(md)
+        self.assertEqual(h1, "Hello") 
+
+    def test_markdown_title_2(self):
+        md = "# Hello\n# World"  
+        h1 = extract_title(md)
+        self.assertEqual(h1, "Hello\nWorld")
+
+    def test_markdown_title_3(self):
+        md = "# "  
+        h1 = extract_title(md)
+        self.assertEqual(h1, "") 
+
+    def test_markdown_title_4(self):
+        md = "## Hello\n#     World     "  
+        h1 = extract_title(md)
+        self.assertEqual(h1, "World") 
+
+#    def test_markdown_title_5(self):                               # test works correctly; commented out in case of future tests below
+#        md = "Missing Heading should raise Exception"  
+#        h1 = extract_title(md)
+#        self.assertEqual(h1, "")                   
+                                                                                                                                  

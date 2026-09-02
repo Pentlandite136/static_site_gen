@@ -320,8 +320,6 @@ def text_to_children(text: str) -> list[HTMLNode]:           # OK:
     return html_leaf_node_list
 
 
-
-
 def markdown_to_html_node(markdown: str) -> ParentNode:       # FIXED: converts full md doc into single parent HTMLNode;
     block_node_list = []                                      # init the list of block nodes; completely missed that this list = children;
     list_of_blocks = markdown_to_blocks(markdown)             # OK: split md into list of blocks;
@@ -331,8 +329,6 @@ def markdown_to_html_node(markdown: str) -> ParentNode:       # FIXED: converts 
         block_node_list.append(html_node)                     # OK: 
     parent_node = ParentNode("div", block_node_list, None)    # almost OK; missed the None parameter
     return parent_node
-
-
 
 
 def block_to_html_node(block: str) -> ParentNode:                      # FIXED: had this code in markdown_to_html_node()
@@ -365,7 +361,25 @@ def block_to_html_node(block: str) -> ParentNode:                      # FIXED: 
         case _:
             raise Exception(f"Error: unidentified block type")            # OK: could also raise ValueError("invalid block type")
 
-        
+
+def extract_title(markdown: str) -> str:
+    lines = markdown.split("\n")
+    clean_lines = ""
+    for line in lines:
+        if line.startswith("# "):
+            if len(line) >= 2:
+                heading = line[2:]
+            else:
+                heading = ""
+            clean_line = heading.strip()
+            clean_lines += clean_line + "\n"
+
+    if len(clean_lines) != 0:
+        return clean_lines[: -1]
+    else:
+        raise Exception("Error: missing h1 header in markdown doc")
+
+                    
 
 
     

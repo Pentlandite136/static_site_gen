@@ -1,6 +1,7 @@
 import os
 import os.path
 import shutil
+from TextNodeUtil import markdown_to_html_node, extract_title
 
 
 def recursive_copy(source: str, dest: str) -> None:
@@ -31,11 +32,37 @@ def recursive_copy(source: str, dest: str) -> None:
         else:
             raise Exception("Error: {source_path} is neither file not directory")  # should never happen
 
+def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")  # notify user
+
+    with open(from_path, "r") as src_file:      # source file containing the markdown
+        src = src_file.read()
+
+    with open(template_path, "r") as tpl_file:  # template file containing the template
+        tpl = tpl_file.read()
+
+    html_node = markdown_to_html_node(src)
+    html_str = html_node.to_html()
+
+    page_title = extract_title(src)
+
+    html_str_with_title = tpl.replace("{{ Title }}", page_title)
+
+    html_page = html_str_with_title.replace("{{ Content }}", html_str)
+
+    with open(dest_path, "w") as dst_file:    # "w" erases everything in file if it exists, creates if doesn't exist
+        dst_file.write(html_page)
+
 
 def main():
-    source = "static"              # my test source root dir;
-    dest   = "public"              # my test destination root dir; 
 
+    source = "static"              # source dir;
+    dest   = "public"              # destination dir; 
     recursive_copy(source, dest)
+
+    from_path = "content/index.md"
+    templ_path = "template.html"
+    dest_path = "public/index.html"
+    generate_page(from_path, templ_path, dest_path)
 
 main()
